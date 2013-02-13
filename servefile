@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib qw(/path/to/folder/containing/JMServer.pm);
+use JMServer;
+
+
+my $docroot = "~/public_html/or/whatever/else/you/want/to/use"; 
+my $file = $ARGV[0] || "/path/to/default/file/you/want/to/serve";
+my $port = $ARGV[1] || "2112";
+
+my $server = JMServer->new({docroot => '/home/jmiller/Music', default_file=> $file, port => $port , indexes => 1});
+
+#print server location for easy copy/paste
+my $localip = (grep {$_ =~ m/inet addr:10/} `ifconfig`)[0];
+$localip =~ s/.*inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*/$1/g;
+chomp $localip;
+
+print "starting server at http://$localip:$port\n";
+my $new_pid =  $server->start;
+
