@@ -2,12 +2,11 @@ package JMServer;
 
 use strict;
 use Socket;
-use POSIX qw(setsid);
 use CGI::Ex::Dump qw(debug);
 use Data::Dumper;
 use IO::Socket::INET;
 use URI::Escape;
-
+use Parallel::ForkManager;
 
 sub new {
     my $class = shift;
@@ -26,6 +25,7 @@ sub config {
         index_file    => $self->{'index_file'} || 'index.html',
         default_port  => $self->{'port'} || 2112,
         indexes       => defined $self->{'indexes'} ? $self->{'indexes'} : 1, #show indexof
+        max_conn      => $self->{'max_conn'} || 30,
     }
 }
 
@@ -77,9 +77,6 @@ sub start {
         Reuse => 1
     ) or die("Could not create socket on port $port!!\n");
 
-    defined(my $pid = fork) or die "Can't fork: $!";
-    exit if $pid;
-    setsid or die "Can't start a new session: $!";
 
     #print out the location we are serving from
     my $localip = (grep {$_ =~ m/inet addr:127/} `ifconfig`)[0];
@@ -94,14 +91,14 @@ sub start {
 
     $self->env({DOCUMENT_ROOT => $self->{'docroot'}});
 
+    my $farker = Parallel::ForkManager->new($self->config->{'max_conn'});
+    
     # wait to accept a connection
     while(1){
         #fork each individual session 
         %ENV = ();
-        defined(my $spid = fork) or die "Can't fork: $!";
-        exit if $spid;
-#        setsid or die "Can't start a new session: $!";
-        
+        $farker->start and next;
+
         my $client_socket;
         $client_socket = $socket->accept();
                     
@@ -167,6 +164,7 @@ sub start {
         $self->serve_content({file => $d_file_path , content => $d_content, no_rel => 1, post_data => $post_data });
         $client_socket->flush;
         close $client_socket;
+        $farker->finish;
     }
 
 }
