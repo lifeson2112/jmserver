@@ -10,7 +10,7 @@ my $docroot = "~/public_html/or/whatever/else/you/want/to/use";
 my $file = $ARGV[0] || "/path/to/default/file/you/want/to/serve";
 my $port = $ARGV[1] || "2112";
 
-my $server = JMServer->new({docroot => '/home/jmiller/Music', default_file=> $file, port => $port , indexes => 1, max_conn => 100});
+my $server = JMServer->new({docroot => $docroot, default_file=> $file, port => $port , indexes => 1, max_conn => 100});
 
 #print server location for easy copy/paste
 my $localip = (grep {$_ =~ m/inet addr:10/} `ifconfig`)[0];

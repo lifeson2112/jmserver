@@ -95,13 +95,14 @@ sub start {
     
     # wait to accept a connection
     while(1){
-        #fork each individual session 
-        %ENV = ();
-        $farker->start and next;
 
         my $client_socket;
         $client_socket = $socket->accept();
-                    
+
+        #fork each individual session
+        %ENV = ();
+        $farker->start and next;
+
         #grab the remote ip
         my $remote_ip = $client_socket->peerhost;
         #use socket as stdout
@@ -157,6 +158,7 @@ sub start {
             $self->serve_content({file => $requested_file_path, post_data => $post_data});
             $client_socket->flush;
             close $client_socket;
+            $farker->finish;
             next;
         }
         #serve default content
